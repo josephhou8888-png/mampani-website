@@ -266,3 +266,9 @@ export const TreeIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-
       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25l-3.75-3.75l-3.75 3.75M12 21.75l-3.75-3.75M12 21.75l3.75-3.75M4.5 21.75l3.75-3.75M19.5 21.75l-3.75-3.75M12 2.25v12" />
     </svg>
 );
+
+export const ArrowUpIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+    </svg>
+);

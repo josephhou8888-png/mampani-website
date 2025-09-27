@@ -20,6 +20,7 @@ import { PauseIcon, PlayIcon, VolumeOffIcon, VolumeUpIcon } from './components/I
 import MampaniLogo from './components/ui/MampaniLogo';
 import EditModeBar from './components/inline-editor/EditModeBar';
 import { cloneDeep } from './utils/sanitizer';
+import BackToTopButton from './components/ui/BackToTopButton';
 
 // Lazy-loaded components
 const AIChatAssistant = lazy(() => import('./components/AIChatAssistant'));
@@ -314,6 +315,7 @@ const AppContent: React.FC = () => {
             )}
 
             {settings?.features?.aiChatEnabled === 'true' && <AIChatAssistant content={displayContent.aiChat} />}
+            <BackToTopButton />
         </div>
     );
 };
