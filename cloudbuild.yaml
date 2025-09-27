@@ -1,0 +1,52 @@
+steps:
+  # 1. Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    
+  # 2. Run the build script (Vite for frontend, TSC for server)
+  # It automatically gets access to the _VITE_SUPABASE_URL and _VITE_SUPABASE_ANON_KEY
+  # variables defined in the 'substitutions' section below or passed from the trigger.
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+    env:
+      - 'VITE_SUPABASE_URL=$_VITE_SUPABASE_URL'
+      - 'VITE_SUPABASE_ANON_KEY=$_VITE_SUPABASE_ANON_KEY'
+
+  # 3. Build the container image
+  # This step creates the final container that will be deployed to Cloud Run.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'builds'
+      - 'submit'
+      - '--tag'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+      - '.'
+
+  # 4. Deploy to Cloud Run
+  # This step takes the container image built in the previous step and deploys it.
+  # It passes along the API_KEY as a runtime environment variable.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=API_KEY=$_API_KEY'
+
+# This section defines default values for variables.
+# These will be used if not provided by the Cloud Run trigger.
+substitutions:
+  _SERVICE_NAME: 'mampani-app'
+  _REGION: 'us-central1'
+  _API_KEY: ''
+  _VITE_SUPABASE_URL: ''
+  _VITE_SUPABASE_ANON_KEY: ''
+
+images:
+  - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'

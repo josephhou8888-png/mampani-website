@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useContent } from '../contexts/ContentContext';
@@ -55,7 +54,7 @@ const SponsorDashboard = ({ content }) => {
     };
 
     return (
-        <div className="bg-slate-50 max-h-[85vh] overflow-y-auto p-8">
+        <div className="bg-slate-50 min-h-screen pt-24 px-8 pb-8">
             <h1 className="text-4xl font-extrabold text-[#0D1B3A]">{content.title}</h1>
             <p className="mt-2 text-lg text-slate-600">{content.welcome.replace('{{companyName}}', user.companyName)}</p>
             <p className="text-slate-500">{content.subtitle}</p>

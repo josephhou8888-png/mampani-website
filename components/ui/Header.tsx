@@ -36,6 +36,10 @@ const MobileNav = ({ isOpen, onClose, onLoginClick, onSignUpClick, onDashboardCl
 
     if (!isOpen) return null;
 
+    let dashboardText = 'Dashboard';
+    if (currentUser?.role === 'admin') dashboardText = 'Admin Dashboard';
+    if (currentUser?.role === 'sponsor') dashboardText = 'Sponsor Dashboard';
+
     return (
         <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={onClose} role="dialog" aria-modal="true">
             <div
@@ -64,7 +68,7 @@ const MobileNav = ({ isOpen, onClose, onLoginClick, onSignUpClick, onDashboardCl
                                 onClick={() => { onDashboardClick(); onClose(); }}
                                 className="w-full font-semibold text-sm px-6 py-3 rounded-full text-[var(--color-primary)] border border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
                             >
-                                Dashboard
+                                {dashboardText}
                             </button>
                              <button
                                 onClick={() => { onCartClick(); onClose(); }}
@@ -106,12 +110,13 @@ interface HeaderProps {
     onSignUpClick: () => void;
     onCartClick: () => void;
     onDashboardClick: () => void;
+    onLogoClick: () => void;
     logoUrl: string;
     content: any;
     language: string;
     onLanguageChange: (lang: string) => void;
 }
-const Header = memo(({ onLoginClick, onSignUpClick, onCartClick, onDashboardClick, logoUrl, content, language, onLanguageChange }: HeaderProps) => {
+const Header = memo(({ onLoginClick, onSignUpClick, onCartClick, onDashboardClick, onLogoClick, logoUrl, content, language, onLanguageChange }: HeaderProps) => {
     const { currentUser, handleLogout } = useAuth();
     const cartItemCount = currentUser?.cart?.length || 0;
     const [isScrolled, setIsScrolled] = useState(false);
@@ -123,11 +128,15 @@ const Header = memo(({ onLoginClick, onSignUpClick, onCartClick, onDashboardClic
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
     
+    let dashboardText = 'Dashboard';
+    if (currentUser?.role === 'admin') dashboardText = 'Admin Dashboard';
+    if (currentUser?.role === 'sponsor') dashboardText = 'Sponsor Dashboard';
+    
     return (
         <>
             <header className={`py-5 px-4 sm:px-6 lg:px-8 fixed top-0 w-full z-40 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-[var(--color-border)]' : 'bg-transparent'}`}>
                 <div className="container mx-auto flex justify-between items-center">
-                    <MampaniLogo logoUrl={logoUrl} />
+                    <MampaniLogo logoUrl={logoUrl} onClick={onLogoClick} />
                     
                     {!currentUser && (
                          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-500">
@@ -149,16 +158,18 @@ const Header = memo(({ onLoginClick, onSignUpClick, onCartClick, onDashboardClic
                                     onClick={onDashboardClick}
                                     className="font-semibold text-sm px-6 py-2.5 rounded-full text-[var(--color-primary)] border border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
                                 >
-                                    Dashboard
+                                    {dashboardText}
                                 </button>
-                                <button onClick={onCartClick} className="relative text-slate-600 hover:text-[var(--color-primary)] p-2" aria-label={`Open cart with ${cartItemCount} items`}>
-                                    <ShoppingCartIcon />
-                                    {cartItemCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-white text-xs font-bold">
-                                            {cartItemCount}
-                                        </span>
-                                    )}
-                                </button>
+                                {currentUser.role === 'user' && (
+                                    <button onClick={onCartClick} className="relative text-slate-600 hover:text-[var(--color-primary)] p-2" aria-label={`Open cart with ${cartItemCount} items`}>
+                                        <ShoppingCartIcon />
+                                        {cartItemCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-white text-xs font-bold">
+                                                {cartItemCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                )}
                                 <button onClick={handleLogout} className="font-semibold text-sm px-6 py-2.5 rounded-full bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors">
                                     Logout
                                 </button>

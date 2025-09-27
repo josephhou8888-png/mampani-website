@@ -101,7 +101,7 @@ const DashboardPage = ({ onCartClick }) => {
     const cartItemCount = user.cart?.length || 0;
 
     return (
-        <div className="bg-slate-50 max-h-[85vh] overflow-y-auto">
+        <div className="bg-slate-50 min-h-screen pt-24">
             <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>

@@ -15,12 +15,11 @@ import Projects from './components/sections/Projects';
 import KnowledgeSection from './components/sections/KnowledgeSection';
 import Join from './components/sections/Join';
 import Footer from './components/ui/Footer';
-import ModalWrapper from './components/modals/ModalWrapper';
-import { PauseIcon, PlayIcon, VolumeOffIcon, VolumeUpIcon } from './components/IconComponents';
 import MampaniLogo from './components/ui/MampaniLogo';
 import EditModeBar from './components/inline-editor/EditModeBar';
 import { cloneDeep } from './utils/sanitizer';
 import BackToTopButton from './components/ui/BackToTopButton';
+import { PauseIcon, PlayIcon, VolumeOffIcon, VolumeUpIcon } from './components/IconComponents';
 
 // Lazy-loaded components
 const AIChatAssistant = lazy(() => import('./components/AIChatAssistant'));
@@ -43,28 +42,23 @@ const AppContent: React.FC = () => {
         language, 
         setLanguage, 
         isLoadingContent, 
-        applications, 
         handleFullContentUpdate, 
-        handleApplicationUpdate, 
-        handleSponsorApplicationSubmit 
     } = useContent();
 
     // --- UI State ---
+    const [activeView, setActiveView] = useState('landing');
     const [authInitialTab, setAuthInitialTab] = useState('login');
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [isSplashVisible, setIsSplashVisible] = useState(false);
     const [editableContent, setEditableContent] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // --- Modal State ---
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
-    const [isSponsorDashboardOpen, setIsSponsorDashboardOpen] = useState(false);
-    const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
     const [isTngModalOpen, setIsTngModalOpen] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);
 
     // --- Video Player State ---
     const [isPlaying, setIsPlaying] = useState(true);
@@ -95,8 +89,18 @@ const AppContent: React.FC = () => {
     useEffect(() => {
         const isEnabledInSettings = content?.websiteSettings?.features?.splashEnabled === 'true';
         const hasSplashContent = content?.splash?.enabled === 'true';
-        setIsSplashVisible(isEnabledInSettings && hasSplashContent);
-    }, [content]);
+        const shouldShowSplash = isEnabledInSettings && hasSplashContent && !currentUser;
+        setIsSplashVisible(shouldShowSplash);
+    }, [content, currentUser]);
+    
+    useEffect(() => {
+        if (currentUser && activeView === 'landing') {
+             if (currentUser.role === 'user') setActiveView('user_dashboard');
+             if (currentUser.role === 'sponsor') setActiveView('sponsor_dashboard');
+        } else if (!currentUser) {
+            setActiveView('landing');
+        }
+    }, [currentUser]);
 
     // --- Edit Mode Handlers ---
     const handleEnterEditMode = () => {
@@ -136,7 +140,6 @@ const AppContent: React.FC = () => {
     
     const extendedLogout = useCallback(() => {
         handleLogout();
-        setIsAdminDashboardOpen(false);
         if (isEditMode) handleExitEditMode();
     }, [isEditMode, handleExitEditMode, handleLogout]);
 
@@ -201,10 +204,54 @@ const AppContent: React.FC = () => {
     
     const settings = displayContent.websiteSettings || {};
 
+    const renderActiveView = () => {
+        if (isEditMode) { // Always show landing page sections in edit mode
+            return (
+                 <main>
+                    <Hero content={displayContent.hero} onCalculateClick={handleScrollToCalculator} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <Sponsors content={displayContent.sponsors} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <About content={displayContent.about} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <div ref={calculatorRef}><CarbonCalculator content={displayContent.carbonCalculator} geminiPrompt={displayContent.geminiPrompt} resultsModalContent={displayContent.resultsModal} onSignUpRedirect={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} /></div>
+                    <Steps content={displayContent.stepsSection} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <Impact content={displayContent.impact} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <Community content={displayContent.community} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <Projects content={displayContent.projectsSection} cardContent={displayContent.projectCard} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <KnowledgeSection content={displayContent.knowledgeSection} onArticleClick={handleArticleClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    <Join content={displayContent.join} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                </main>
+            );
+        }
+
+        switch(activeView) {
+            case 'user_dashboard':
+                return <DashboardPage onCartClick={() => setIsCartOpen(true)} />;
+            case 'sponsor_dashboard':
+                return <SponsorDashboard content={displayContent.sponsorDashboard} />;
+            case 'admin_dashboard':
+                return <div className="h-screen"><TheAdminDashboard onExit={() => setActiveView('landing')} /></div>;
+            case 'landing':
+            default:
+                return (
+                    <main>
+                        <Hero content={displayContent.hero} onCalculateClick={handleScrollToCalculator} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <Sponsors content={displayContent.sponsors} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <About content={displayContent.about} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <div ref={calculatorRef}><CarbonCalculator content={displayContent.carbonCalculator} geminiPrompt={displayContent.geminiPrompt} resultsModalContent={displayContent.resultsModal} onSignUpRedirect={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} /></div>
+                        <Steps content={displayContent.stepsSection} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <Impact content={displayContent.impact} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <Community content={displayContent.community} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <Projects content={displayContent.projectsSection} cardContent={displayContent.projectCard} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <KnowledgeSection content={displayContent.knowledgeSection} onArticleClick={handleArticleClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                        <Join content={displayContent.join} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+                    </main>
+                )
+        }
+    }
+
     return (
         <div>
-            {currentUser?.role === 'admin' && !isEditMode && (
-                <div className="fixed bottom-6 left-6 z-[9998]">
+            {currentUser?.role === 'admin' && !isEditMode && activeView === 'landing' && (
+                <div className="fixed bottom-6 left-6 z-[9998] chat-fab">
                     <button
                         onClick={handleEnterEditMode}
                         className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-full shadow-lg hover:bg-emerald-700 transition-transform hover:scale-105"
@@ -214,30 +261,18 @@ const AppContent: React.FC = () => {
                 </div>
             )}
             
-            {isEditMode && (
-                <EditModeBar onSave={handleSaveChanges} onExit={handleExitEditMode} isSaving={isSaving} />
-            )}
+            {isEditMode && <EditModeBar onSave={handleSaveChanges} onExit={handleExitEditMode} isSaving={isSaving} />}
 
-            {displayContent?.hero?.videoUrl && (
-                <div className="fixed inset-0 z-[-1] overflow-hidden">
-                    <video
-                        ref={videoRef}
-                        key={displayContent.hero.videoUrl}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute top-1/2 left-1/2 w-auto h-auto min-w-full min-h-full object-cover transform -translate-x-1/2 -translate-y-1/2"
-                        onPlay={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
-                    >
+            {displayContent?.hero?.videoUrl && activeView === 'landing' && (
+                 <div className="fixed inset-0 z-[-1] overflow-hidden">
+                    <video ref={videoRef} key={displayContent.hero.videoUrl} autoPlay loop muted playsInline className="absolute top-1/2 left-1/2 w-auto h-auto min-w-full min-h-full object-cover transform -translate-x-1/2 -translate-y-1/2" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)}>
                         <source src={displayContent.hero.videoUrl} type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
             )}
 
-            {displayContent?.hero?.videoUrl && (
+            {displayContent?.hero?.videoUrl && activeView === 'landing' && (
                 <div className="fixed bottom-6 right-6 z-30 flex items-center gap-3">
                     <button onClick={togglePlay} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 transition-colors" aria-label={isPlaying ? "Pause video" : "Play video"}>
                         {isPlaying ? <PauseIcon /> : <PlayIcon />}
@@ -248,70 +283,34 @@ const AppContent: React.FC = () => {
                 </div>
             )}
 
-            <SplashPage 
-                isOpen={isSplashVisible}
-                content={displayContent.splash} 
-                onClose={() => setIsSplashVisible(false)}
-                onRegisterClick={handleSplashRegisterClick}
-            />
+            <SplashPage isOpen={isSplashVisible} content={displayContent.splash} onClose={() => setIsSplashVisible(false)} onRegisterClick={handleSplashRegisterClick} />
 
-            <Header 
-                onLoginClick={handleLoginClick}
-                onSignUpClick={handleSignUpClick}
-                onDashboardClick={() => {
-                    if (currentUser?.role === 'user') setIsDashboardModalOpen(true);
-                    if (currentUser?.role === 'sponsor') setIsSponsorDashboardOpen(true);
-                    if (currentUser?.role === 'admin') setIsAdminDashboardOpen(true);
-                }}
-                onCartClick={() => setIsCartOpen(true)}
-                logoUrl={settings.logoUrl}
-                content={displayContent.header}
-                language={language}
-                onLanguageChange={setLanguage}
-            />
-            <main>
-                <Hero content={displayContent.hero} onCalculateClick={handleScrollToCalculator} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <Sponsors content={displayContent.sponsors} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <About content={displayContent.about} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <div ref={calculatorRef}>
-                    <CarbonCalculator content={displayContent.carbonCalculator} geminiPrompt={displayContent.geminiPrompt} resultsModalContent={displayContent.resultsModal} onSignUpRedirect={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                </div>
-                <Steps content={displayContent.stepsSection} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <Impact content={displayContent.impact} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <Community content={displayContent.community} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <Projects content={displayContent.projectsSection} cardContent={displayContent.projectCard} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <KnowledgeSection content={displayContent.knowledgeSection} onArticleClick={handleArticleClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-                <Join content={displayContent.join} onSignUpClick={handleSignUpClick} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
-            </main>
-            <Footer content={displayContent.footer} settings={settings} onSponsorClick={() => { setAuthInitialTab('sponsor'); setIsAuthModalOpen(true); }} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />
+            {activeView !== 'admin_dashboard' && (
+                 <Header 
+                    onLoginClick={handleLoginClick}
+                    onSignUpClick={handleSignUpClick}
+                    onDashboardClick={() => currentUser?.role && setActiveView(`${currentUser.role}_dashboard`)}
+                    onCartClick={() => setIsCartOpen(true)}
+                    onLogoClick={() => setActiveView('landing')}
+                    logoUrl={settings.logoUrl}
+                    content={displayContent.header}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                />
+            )}
+           
+            {renderActiveView()}
 
-            <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authInitialTab} content={displayContent.auth} onUserLogin={() => setIsDashboardModalOpen(true)} onSponsorLogin={() => setIsSponsorDashboardOpen(true)} />
+            {activeView === 'landing' && <Footer content={displayContent.footer} settings={settings} onSponsorClick={() => { setAuthInitialTab('sponsor'); setIsAuthModalOpen(true); }} isEditing={isEditMode} onUpdate={handleUpdateEditableContent} />}
+
+            <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authInitialTab} content={displayContent.auth} onUserLogin={() => setActiveView('user_dashboard')} onSponsorLogin={() => setActiveView('sponsor_dashboard')} />
             <ArticleModal isOpen={isArticleModalOpen} onClose={() => setIsArticleModalOpen(false)} article={selectedArticle} />
             
             {currentUser?.role === 'user' && (
                 <>
-                    <ModalWrapper isOpen={isDashboardModalOpen} onClose={() => setIsDashboardModalOpen(false)} maxWidth="max-w-5xl">
-                         <DashboardPage onCartClick={() => { setIsDashboardModalOpen(false); setIsCartOpen(true); }} />
-                    </ModalWrapper>
-                    
                     <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onCheckout={handleCheckout} content={displayContent.cart} />
-
                     <TngModal isOpen={isTngModalOpen} onClose={() => setIsTngModalOpen(false)} totalAmount={currentUser.cart?.reduce((sum, item) => sum + item.price, 0) || 0} onPaymentSuccess={handleTngPaymentSuccess} />
                 </>
-            )}
-
-            {currentUser?.role === 'sponsor' && (
-                <ModalWrapper isOpen={isSponsorDashboardOpen} onClose={() => setIsSponsorDashboardOpen(false)} maxWidth="max-w-4xl">
-                    <SponsorDashboard content={displayContent.sponsorDashboard} />
-                </ModalWrapper>
-            )}
-
-            {currentUser?.role === 'admin' && (
-                <ModalWrapper isOpen={isAdminDashboardOpen} onClose={() => setIsAdminDashboardOpen(false)} maxWidth="max-w-screen-xl">
-                    <div className="h-[90vh]">
-                        <TheAdminDashboard />
-                    </div>
-                </ModalWrapper>
             )}
 
             {settings?.features?.aiChatEnabled === 'true' && <AIChatAssistant content={displayContent.aiChat} />}

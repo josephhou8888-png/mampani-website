@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import { cloneDeep } from '../../utils/sanitizer';
 import { SettingsIcon, HomeIcon, InfoIcon, UsersIcon, ProjectIcon, KnowledgeIcon, JoinIcon, FooterIcon, LogoutIcon, ExternalLinkIcon, SparklesIcon, CalculatorIcon, StepsIcon, ImpactIcon, GiftIcon, TrophyIcon } from '../IconComponents';
@@ -21,13 +18,13 @@ import SponsoredProductsPanel from './panels/SponsoredProductsPanel';
 import { useAuth } from '../../contexts/AuthContext';
 import { useContent } from '../../contexts/ContentContext';
 
-const MampaniLogo = ({ logoUrl }) => {
+const MampaniLogo = ({ logoUrl, onExit }) => {
     const finalLogoUrl = logoUrl || "https://i.ibb.co/tDWTX9V/logo.png";
     return (
-        <div className="flex items-center space-x-2">
+        <button onClick={onExit} className="flex items-center space-x-2" aria-label="Exit Admin Dashboard">
             <img src={finalLogoUrl} alt="Mampani Logo" className="w-8 h-8" />
             <span className="text-2xl font-bold text-white">Mampani</span>
-        </div>
+        </button>
     );
 };
 
@@ -54,7 +51,7 @@ const DBStatusIndicator = ({ status }) => {
 };
 
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onExit }) => {
     const { currentUser, handleLogout } = useAuth();
     const { allContent, applications, handleFullContentUpdate, handleApplicationUpdate, language, setLanguage, dbStatus } = useContent();
 
@@ -168,7 +165,7 @@ const AdminDashboard = () => {
         <div className="flex h-full bg-slate-100">
             <aside className="w-64 bg-[#0D1B3A] text-white flex flex-col flex-shrink-0">
                 <div className="h-20 flex items-center px-6 border-b border-slate-700">
-                    <MampaniLogo logoUrl={editableContent.websiteSettings?.logoUrl} />
+                    <MampaniLogo logoUrl={editableContent.websiteSettings?.logoUrl} onExit={onExit} />
                 </div>
                 <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                     <p className="px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">{adminContent.navigationTitle}</p>
@@ -200,9 +197,9 @@ const AdminDashboard = () => {
                             <button onClick={() => setLanguage('ms')} className={`px-3 py-1 rounded ${language === 'ms' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}`}>Malaysian</button>
                         </div>
                         {saveStatus && <span className="text-green-600 font-semibold text-sm animate-fade-in">{saveStatus}</span>}
-                        <a href="/" target="_blank" rel="noopener noreferrer" className="font-semibold text-sm px-4 py-2 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors flex items-center gap-2">
+                        <button onClick={onExit} className="font-semibold text-sm px-4 py-2 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors flex items-center gap-2">
                             {adminContent.viewSite} <ExternalLinkIcon />
-                        </a>
+                        </button>
                         <button 
                             onClick={handleSave} 
                             disabled={dbStatus === 'error' || dbStatus === 'empty'}
