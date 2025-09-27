@@ -24,6 +24,7 @@
     /* Allow any for flexibility in API routes */
     "noImplicitAny": false
   },
-  "include": ["src", "components", "contexts", "services", "types", "utils", "api", "App.tsx", "AppContent.tsx", "index.tsx", "content.ts"],
+  "include": ["src", "components", "contexts", "services", "types", "utils", "App.tsx", "AppContent.tsx", "index.tsx", "content.ts"],
+  "exclude": ["server.ts", "api", "dist-server"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
